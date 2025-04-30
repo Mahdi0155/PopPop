@@ -15,6 +15,7 @@ class SuperStates(StatesGroup):
     waiting_for_cover = State()
     waiting_for_caption = State()
     waiting_for_confirmation = State()
+    waiting_for_schedule_time = State()
 
 @router.message(F.text == "سوپر")
 async def start_super(msg: types.Message, state: FSMContext):
@@ -67,7 +68,26 @@ async def send_now_handler(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "schedule_later")
 async def schedule_handler(callback: types.CallbackQuery, state: FSMContext):
-    await callback.message.edit_caption("⏰ این بخش هنوز راه‌اندازی نشده است.", parse_mode='Markdown')
+    await callback.message.edit_caption("⏰ لطفاً زمان ارسال را به دقیقه وارد کنید (مثلاً 10 برای ۱۰ دقیقه بعد):", parse_mode='Markdown')
+    await state.set_state(SuperStates.waiting_for_schedule_time)
+
+@router.message(SuperStates.waiting_for_schedule_time, F.text.regexp(r"^\d+$"))
+async def schedule_time_handler(msg: types.Message, state: FSMContext):
+    data = await state.get_data()
+    minutes = int(msg.text)
+
+    await msg.answer(f"✅ ویدیو در {minutes} دقیقه دیگر ارسال خواهد شد.")
+
+    async def delayed_send():
+        await asyncio.sleep(minutes * 60)
+        await msg.bot.send_video(chat_id=CHANNEL_USERNAME, video=data['video_id'], caption=data['full_caption'], parse_mode='Markdown')
+
+    asyncio.create_task(delayed_send())
+    await state.clear()
+
+@router.message(SuperStates.waiting_for_schedule_time)
+async def invalid_schedule_input(msg: types.Message):
+    await msg.answer("لطفاً فقط عدد وارد کنید (مثلاً 5 برای ۵ دقیقه بعد).")
 
 @router.callback_query(F.data == "cancel")
 async def cancel_handler(callback: types.CallbackQuery, state: FSMContext):
