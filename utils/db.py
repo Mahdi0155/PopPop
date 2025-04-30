@@ -64,3 +64,10 @@ def get_file_by_id(file_db_id: int):
     if row:
         return {"file_id": row[0], "type": row[1]}
     return None
+
+def get_file_by_id(file_db_id: str):
+    cur.execute("SELECT file_id FROM files WHERE id = ?", (file_db_id,))
+    row = cur.fetchone()
+    if row:
+        return {"file_id": row[0]}
+    return None
