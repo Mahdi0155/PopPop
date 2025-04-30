@@ -52,22 +52,11 @@ def get_stats():
 def log_file(file_id: str, file_type: str, user_id: int) -> int:
     cur.execute("INSERT INTO files (file_id, type, user_id) VALUES (?, ?, ?)", (file_id, file_type, user_id))
     conn.commit()
-    return cur.lastrowid  # برمی‌گرداند ID دیتابیس برای استفاده در لینک مستقیم
-
-def get_file_by_id(file_db_id: int):
-    cur.execute("SELECT file_id, type FROM files WHERE id = ?", (file_db_id,))
-    return cur.fetchone()
+    return cur.lastrowid
 
 def get_file_by_id(file_db_id: int):
     cur.execute("SELECT file_id, type FROM files WHERE id = ?", (file_db_id,))
     row = cur.fetchone()
     if row:
         return {"file_id": row[0], "type": row[1]}
-    return None
-
-def get_file_by_id(file_db_id: str):
-    cur.execute("SELECT file_id FROM files WHERE id = ?", (file_db_id,))
-    row = cur.fetchone()
-    if row:
-        return {"file_id": row[0]}
     return None
