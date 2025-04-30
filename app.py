@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from data.config import BOT_TOKEN
 from utils.db import init_db
-from handlers import start, post, super, stats
+from handlers.panel import start  # اگه start اونجاست
 
 async def main():
     bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
