@@ -42,11 +42,11 @@ def get_stats():
 
     return {
         'total_users': total_users,
-        'hour': count_from(timedelta(hours=1)),
-        'day': count_from(timedelta(days=1)),
-        'week': count_from(timedelta(weeks=1)),
-        'month': count_from(timedelta(days=30)),
-        'files': count_files()
+        'hour_users': count_from(timedelta(hours=1)),
+        'day_users': count_from(timedelta(days=1)),
+        'week_users': count_from(timedelta(weeks=1)),
+        'month_users': count_from(timedelta(days=30)),
+        'total_files': count_files()
     }
 
 def log_file(file_id: str, file_type: str, user_id: int):
