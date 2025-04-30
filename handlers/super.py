@@ -36,9 +36,10 @@ async def get_cover(msg: types.Message, state: FSMContext):
 @router.message(SuperStates.waiting_for_caption)
 async def get_caption(msg: types.Message, state: FSMContext):
     data = await state.get_data()
-    bot_username = msg.bot['bot_username']
+    me = await msg.bot.get_me()
+    bot_username = me.username
     caption = f"{msg.text}\n\nمشاهده: [دریافت فایل](https://t.me/{bot_username}?start=super_{msg.from_user.id})\n\n{CHANNEL_TAG}"
-    
+
     await state.update_data(caption=caption)
 
     await msg.answer_photo(data['cover_id'], caption=caption, parse_mode='Markdown', reply_markup=main_keyboard)
