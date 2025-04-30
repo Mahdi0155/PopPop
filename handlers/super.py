@@ -1,4 +1,4 @@
-#===== FILE: handlers/super.py =====
+# FILE: handlers/super.py
 from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -35,8 +35,10 @@ async def get_cover(msg: types.Message, state: FSMContext):
 
 @router.message(SuperStates.waiting_for_caption)
 async def get_caption(msg: types.Message, state: FSMContext):
-    caption = f"{msg.text}\n\nمشاهده: [دریافت فایل](https://t.me/{msg.bot.username}?start=super_{msg.from_user.id})\n\n{CHANNEL_TAG}"
     data = await state.get_data()
+    bot_username = msg.bot['bot_username']
+    caption = f"{msg.text}\n\nمشاهده: [دریافت فایل](https://t.me/{bot_username}?start=super_{msg.from_user.id})\n\n{CHANNEL_TAG}"
+    
     await state.update_data(caption=caption)
 
     await msg.answer_photo(data['cover_id'], caption=caption, parse_mode='Markdown', reply_markup=main_keyboard)
