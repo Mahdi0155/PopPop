@@ -49,6 +49,11 @@ def get_stats():
         'total_files': count_files()
     }
 
-def log_file(file_id: str, file_type: str, user_id: int):
+def log_file(file_id: str, file_type: str, user_id: int) -> int:
     cur.execute("INSERT INTO files (file_id, type, user_id) VALUES (?, ?, ?)", (file_id, file_type, user_id))
     conn.commit()
+    return cur.lastrowid  # برمی‌گرداند ID دیتابیس برای استفاده در لینک مستقیم
+
+def get_file_by_id(file_db_id: int):
+    cur.execute("SELECT file_id, type FROM files WHERE id = ?", (file_db_id,))
+    return cur.fetchone()
