@@ -8,6 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from data.config import BOT_TOKEN
 from handlers.panel import router as panel_router
+from utils.db import init_db  # اضافه کردن این خط
 
 # ساخت ربات
 bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
@@ -25,6 +26,7 @@ async def set_commands(bot: Bot):
 
 # اجرای اصلی
 async def main():
+    init_db()  # مقداردهی اولیه دیتابیس
     await set_commands(bot)
     await dp.start_polling(bot)
 
