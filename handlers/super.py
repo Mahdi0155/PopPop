@@ -36,10 +36,18 @@ async def get_cover(msg: types.Message, state: FSMContext):
 @router.message(SuperStates.waiting_for_caption)
 async def get_caption(msg: types.Message, state: FSMContext):
     data = await state.get_data()
-    await state.update_data(caption_text=msg.text)
+    video_id = data['video_id']
+    user_id = msg.from_user.id
 
-    preview_caption = f"{msg.text}\n\nمشاهده: [دریافت فایل](https://t.me/{(await msg.bot.get_me()).username}?start=super_{msg.from_user.id})\n\n{CHANNEL_TAG}"
-    await state.update_data(full_caption=preview_caption)
+    # ثبت فایل و گرفتن شناسه دیتابیس
+    file_db_id = log_file(video_id, 'video', user_id)
+
+    # ساخت لینک با شناسه دیتابیس
+    bot_username = (await msg.bot.get_me()).username
+    caption_text = msg.text
+    full_caption = f"{caption_text}\n\nمشاهده: [دریافت فایل](https://t.me/{bot_username}?start=super_{file_db_id})\n\n{CHANNEL_TAG}"
+
+    await state.update_data(full_caption=full_caption)
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="ارسال در کانال", callback_data="send_now")],
@@ -47,14 +55,13 @@ async def get_caption(msg: types.Message, state: FSMContext):
         [InlineKeyboardButton(text="لغو", callback_data="cancel")]
     ])
 
-    await msg.answer_photo(data['cover_id'], caption=preview_caption, parse_mode='Markdown', reply_markup=keyboard)
+    await msg.answer_photo(data['cover_id'], caption=full_caption, parse_mode='Markdown', reply_markup=keyboard)
     await state.set_state(SuperStates.waiting_for_confirmation)
 
 @router.callback_query(F.data == "send_now")
 async def send_now_handler(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     await callback.bot.send_video(chat_id=CHANNEL_USERNAME, video=data['video_id'], caption=data['full_caption'], parse_mode='Markdown')
-    log_file(data['video_id'], 'video', callback.from_user.id)
     await callback.message.edit_caption(caption="✅ ویدیو با موفقیت در کانال ارسال شد.", parse_mode='Markdown')
     await state.clear()
 
@@ -79,5 +86,3 @@ async def check_joined(msg: types.Message):
         await msg.answer("عضویت شما تأیید شد. ارسال فایل آغاز می‌شود...")
         await asyncio.sleep(2)
         await msg.answer_video("USER_RELATED_VIDEO", caption="درخواست شما آماده شد.")
-        await asyncio.sleep(30)
-        await msg.delete()
