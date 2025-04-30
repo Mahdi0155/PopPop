@@ -57,3 +57,10 @@ def log_file(file_id: str, file_type: str, user_id: int) -> int:
 def get_file_by_id(file_db_id: int):
     cur.execute("SELECT file_id, type FROM files WHERE id = ?", (file_db_id,))
     return cur.fetchone()
+
+def get_file_by_id(file_db_id: int):
+    cur.execute("SELECT file_id, type FROM files WHERE id = ?", (file_db_id,))
+    row = cur.fetchone()
+    if row:
+        return {"file_id": row[0], "type": row[1]}
+    return None
