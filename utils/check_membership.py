@@ -1,4 +1,3 @@
-#===== FILE: utils/check_membership.py =====
 from aiogram import Bot
 from data.config import FORCE_SUB_CHANNELS
 
