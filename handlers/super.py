@@ -1,9 +1,9 @@
-# FILE: handlers/super.py
 from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from keyboards.default import main_keyboard, confirm_join_keyboard
-from data.config import CHANNEL_USERNAME, CHANNEL_TAG, REQUIRED_CHANNELS
+from data.config import CHANNEL_USERNAME, CHANNEL_TAG
 from utils.db import log_file
 from utils.subs import check_subscriptions
 import asyncio
@@ -14,7 +14,7 @@ class SuperStates(StatesGroup):
     waiting_for_video = State()
     waiting_for_cover = State()
     waiting_for_caption = State()
-    waiting_for_check = State()
+    waiting_for_confirmation = State()
 
 @router.message(F.text == "سوپر")
 async def start_super(msg: types.Message, state: FSMContext):
@@ -36,15 +36,35 @@ async def get_cover(msg: types.Message, state: FSMContext):
 @router.message(SuperStates.waiting_for_caption)
 async def get_caption(msg: types.Message, state: FSMContext):
     data = await state.get_data()
-    me = await msg.bot.get_me()
-    bot_username = me.username
-    caption = f"{msg.text}\n\nمشاهده: [دریافت فایل](https://t.me/{bot_username}?start=super_{msg.from_user.id})\n\n{CHANNEL_TAG}"
+    await state.update_data(caption_text=msg.text)
 
-    await state.update_data(caption=caption)
+    preview_caption = f"{msg.text}\n\nمشاهده: [دریافت فایل](https://t.me/{(await msg.bot.get_me()).username}?start=super_{msg.from_user.id})\n\n{CHANNEL_TAG}"
+    await state.update_data(full_caption=preview_caption)
 
-    await msg.answer_photo(data['cover_id'], caption=caption, parse_mode='Markdown', reply_markup=main_keyboard)
-    log_file(data['video_id'], 'video', msg.from_user.id)
-    await msg.bot.send_video(chat_id=CHANNEL_USERNAME, video=data['video_id'], caption=caption, parse_mode='Markdown')
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="ارسال در کانال", callback_data="send_now")],
+        [InlineKeyboardButton(text="ارسال در آینده", callback_data="schedule_later")],
+        [InlineKeyboardButton(text="لغو", callback_data="cancel")]
+    ])
+
+    await msg.answer_photo(data['cover_id'], caption=preview_caption, parse_mode='Markdown', reply_markup=keyboard)
+    await state.set_state(SuperStates.waiting_for_confirmation)
+
+@router.callback_query(F.data == "send_now")
+async def send_now_handler(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    await callback.bot.send_video(chat_id=CHANNEL_USERNAME, video=data['video_id'], caption=data['full_caption'], parse_mode='Markdown')
+    log_file(data['video_id'], 'video', callback.from_user.id)
+    await callback.message.edit_caption(caption="✅ ویدیو با موفقیت در کانال ارسال شد.", parse_mode='Markdown')
+    await state.clear()
+
+@router.callback_query(F.data == "schedule_later")
+async def schedule_handler(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.edit_caption("⏰ این بخش هنوز راه‌اندازی نشده است.", parse_mode='Markdown')
+
+@router.callback_query(F.data == "cancel")
+async def cancel_handler(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.edit_caption("❌ عملیات ارسال لغو شد.", parse_mode='Markdown')
     await state.clear()
 
 @router.message(F.text.startswith("عضو شدم"))
